@@ -92,7 +92,7 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 - [x] Show open-source licence notices inside the app (OS-9, follow-up 1).
 - [ ] Decide whether the Lumix-derived layout needs the designer's permission (OS-9, follow-up 2).
 - [ ] Make the repository public only after the review passes. A private remote exists and `main` is pushed (3 November 2026).
-- [ ] Configure repository description, topics, social preview and default branch.
+- [ ] Configure repository description, topics, social preview and default branch. The description and eleven topics are set (3 November 2026); still to do: upload [`docs/social-preview.png`](docs/social-preview.png) under Settings → General → Social preview.
 - [ ] Enable branch protection, required CI checks (including `Secret scan`), vulnerability reporting and dependency alerts.
 - [x] Document PR-only governance, maintainer-only merge authority and required branch-protection settings.
 - [ ] Open one test issue and pull request to verify templates, permissions and contributor instructions.
