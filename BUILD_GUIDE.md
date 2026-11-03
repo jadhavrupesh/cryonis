@@ -574,8 +574,8 @@ Done later in the project (see `PROJECT_STATUS.md` for the verified list):
 - **Production token endpoint**: the settings sheet accepts an application-owned **HTTPS** endpoint (validated: no http, no URL credentials) which
   takes precedence over the development sandbox ID. The service itself (with real user auth) still has to be built.
 - **Release engineering**: bundle id `com.rupeshjadhav.cryonis`, Android signing via an ignored `android/key.properties`
-  (example provided), strict analysis options, macOS dependencies via Swift Package Manager, a GitHub Actions workflow
-  (`.github/workflows/ci.yml`) running analysis, tests, an Android debug build and a macOS debug build.
+  (example provided), strict analysis options, macOS dependencies via Swift Package Manager, and (since removed, see
+  the README) a GitHub Actions workflow running analysis, tests, an Android debug build and a macOS debug build.
 - Call robustness: start / mic / end / dispose failures can't become unhandled async errors; a failed call shows a visible retry.
 
 ---

@@ -270,7 +270,7 @@ flutter test
 
 cd agent
 uv sync --locked
-uv run pytest -q            # the deployed agent; this is what CI runs
+uv run pytest -q            # the deployed agent
 ```
 
 Build debug artifacts:
@@ -302,11 +302,9 @@ flutter test integration_test/voice_ui_preview_test.dart -d macos
 - Web is not a supported Ollama Cloud target because the browser cannot call the current endpoint directly under its CORS policy.
 - VoiceStudio support in the agent is an optional wiring path and has not been verified against a live VoiceStudio server.
 
-## Continuous integration
+## Checks and CI/CD
 
-GitHub Actions under `.github/workflows/ci.yml` runs static analysis, Flutter tests, Python agent tests, and Android/macOS debug builds without requiring provider secrets. `.github/workflows/security.yml` checks the complete fetched Git history with Gitleaks on every push and pull request. `.github/workflows/dependency-review.yml` blocks a pull request that adds a dependency with a high or critical advisory or an AGPL/GPL licence, and `.github/dependabot.yml` proposes weekly updates for GitHub Actions, Dart packages and the agent's Python lock. All workflows use read-only repository permissions and pin every third-party action to a reviewed commit SHA.
-
-> **Switched off on the maintainer's repository.** Actions are currently disabled in its Settings → Actions → General, so none of these workflows run there until they are turned back on. A fork or a new repository runs them as soon as Actions is enabled.
+This repository has no CI/CD: there are no GitHub Actions workflows and no Dependabot configuration. Run the commands in [Test and build](#test-and-build) before you open a pull request and report the results in it. Contributors can restore the earlier workflows (analysis, tests, debug builds, a Gitleaks scan, dependency review and Dependabot) from the Git history with `git checkout c02d8ad -- .github/workflows .github/dependabot.yml`.
 
 Contributors with Gitleaks installed can scan committed history before pushing:
 
@@ -318,7 +316,7 @@ Signed production builds still need platform signing credentials. Real Ollama an
 
 ## Contributing
 
-Cryonis welcomes contributions from everyone. All changes must be proposed through a pull request; direct pushes to `main` are not allowed, and only maintainers may merge after the required review and CI checks pass.
+Cryonis welcomes contributions from everyone. All changes must be proposed through a pull request; direct pushes to `main` are not allowed, and only maintainers may merge after review and the reported checks.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before starting and [GOVERNANCE.md](GOVERNANCE.md) for contributor, reviewer and maintainer responsibilities. Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md), support requests follow [SUPPORT.md](SUPPORT.md), and vulnerabilities must be reported privately under [SECURITY.md](SECURITY.md). GitHub owners must enable the rules in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) after the public remote is created—the policy files do not enforce branch protection by themselves.
 

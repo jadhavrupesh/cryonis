@@ -20,4 +20,4 @@ Never send credentials or private user data when requesting support. Redact toke
 
 ## Supported environment
 
-The latest `main` branch is the supported development target until tagged releases begin. CI verifies the versions documented in [`README.md`](README.md); other toolchain or operating-system versions may work but are not guaranteed.
+The latest `main` branch is the supported development target until tagged releases begin. The versions documented in [`README.md`](README.md) are the ones the maintainers run the checks on; other toolchain or operating-system versions may work but are not guaranteed.

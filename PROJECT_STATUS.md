@@ -12,8 +12,8 @@
 | Python voice-agent tests | Done | 40 tests pass (settings, language, TTS, table cleanup, noise filter, interruption timing, latency logging) |
 | macOS debug build | Done | `flutter build macos --debug` succeeds |
 | Android debug build | Done | `flutter build apk --debug` succeeds |
-| CI | Done | GitHub Actions checks analysis, tests, Android, and macOS |
-| Git | Pushed, private | The earlier local history (initial commit `9459b47` and two later commits, no remote) was moved out of the project on 3 November 2026 so the code can be pushed to a different account. A new repository with one fresh first commit (new account's identity, set for this project only) was pushed on 3 November 2026 to the private `jadhavrupesh/cryonis` repository over SSH, using a dedicated key. The first remote runs started on that push: the Gitleaks secret scan passed; CI had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request (3 November 2026); Dependabot had opened two update pull requests, which stay open |
+| CI/CD | Removed | The GitHub Actions workflows and the Dependabot configuration were deleted on 3 November 2026 at the maintainer's request; they stay in the Git history (commit `c02d8ad`). Analysis, tests and builds are run locally |
+| Git | Pushed, private | The earlier local history (initial commit `9459b47` and two later commits, no remote) was moved out of the project on 3 November 2026 so the code can be pushed to a different account. A new repository with one fresh first commit (new account's identity, set for this project only) was pushed on 3 November 2026 to the private `jadhavrupesh/cryonis` repository over SSH, using a dedicated key. The first remote runs started on that push: the Gitleaks secret scan passed; CI had not finished when GitHub Actions was switched off, and the workflows and Dependabot configuration were then removed at the maintainer's request (3 November 2026). The three pull requests Dependabot had opened were closed and its branches deleted |
 | Text chat | Done | Streaming, history, stop, retry, regeneration, errors, and connection timeout |
 | Markdown/code UI | Done | Rich Markdown, highlighted code, copy, links, tables, and streaming fences |
 | Conversation persistence | Done | Conversations, their last-activity time and attached images survive restarts; Home lists the conversation under "Previous conversations" |
@@ -78,7 +78,7 @@
 - macOS dependencies use Swift Package Manager; obsolete CocoaPods integration was removed.
 - Static analysis enables strict casts, strict inference, and strict raw types.
 - Root and agent documentation describe setup, testing, security, and deployment.
-- CI creates empty ignored secrets and runs checks without provider credentials.
+- The checks need no provider credentials: an empty, ignored `lib/secrets.dart` is enough.
 
 ## Remaining external work
 

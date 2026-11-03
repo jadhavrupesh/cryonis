@@ -295,7 +295,7 @@ test/
 integration_test/
   native_chat_test.dart   # real chat inside the macOS app; spends a little free quota
   voice_ui_preview_test.dart  # renders Home, Chat and the voice screen in every state to PNGs in the app container (no network, no key)
-agent/                    # deployed and CI-tested voice agent; not part of the Flutter build
+agent/                    # deployed and unit-tested voice agent; not part of the Flutter build
   src/agent.py            # AgentServer + AgentSession: STT / LLM (Ollama Cloud) / TTS / VAD / turn detection; SpeechSettings (language, noise
                           # filter, interruption words, VoiceStudio switch); latency + interruption logging
   tests/test_agent.py     # 40 tests: LLM/TTS wiring, bilingual prompt, table cleanup, settings, noise filter, interruption and latency
@@ -381,7 +381,7 @@ The actionable engineering backlog is maintained in `PROJECT_IMPROVEMENTS.md`. A
 - Free Ollama usage has limits; the app doesn't show remaining quota.
 - The chat model picker remembers the last choice; on the user's phone it is `gemma4:31b`, whose first token takes ~10 s. The default
   (`gpt-oss:120b`) is far quicker.
-- Git: the earlier local history (initial baseline `9459b47` plus two commits, never pushed) was moved out of the project on 3 Nov 2026 so the code can go to a different GitHub account. A new repository was created the same day with the new account's identity set for this project only (the machine's global identity is unchanged) and one fresh first commit. `origin` is the private `jadhavrupesh/cryonis` repository on GitHub, reached over SSH with a dedicated key that the project's own Git config selects (this machine's stored HTTPS login belongs to a different account, so plain HTTPS pushes would use the wrong one). `main` was pushed on 3 Nov 2026. The first Gitleaks secret scan passed; CI had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request (Settings → Actions → General → Disable actions; undo it there to run CI again). Dependabot had already opened two update pull requests (GitHub Actions group, pytest), which stay open.
+- Git: the earlier local history (initial baseline `9459b47` plus two commits, never pushed) was moved out of the project on 3 Nov 2026 so the code can go to a different GitHub account. A new repository was created the same day with the new account's identity set for this project only (the machine's global identity is unchanged) and one fresh first commit. `origin` is the private `jadhavrupesh/cryonis` repository on GitHub, reached over SSH with a dedicated key that the project's own Git config selects (this machine's stored HTTPS login belongs to a different account, so plain HTTPS pushes would use the wrong one). `main` was pushed on 3 Nov 2026. The first Gitleaks secret scan passed; CI had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request. The workflows and `dependabot.yml` were then deleted from the repository (3 Nov 2026; they stay in the history, commit `c02d8ad`), and the three pull requests Dependabot had already opened were closed and its branches deleted. There is no automated CI/CD now; checks run locally.
 
 ## Working notes (how things are run here)
 - **Phone:** over USB `flutter devices` lists the A142 by its serial (`flutter run -d <serial>`); over Wireless debugging it is
@@ -414,7 +414,7 @@ The actionable engineering backlog is maintained in `PROJECT_IMPROVEMENTS.md`. A
 3. If chatter still cuts Cryo off, decide whether to try `NOISE_CANCELLATION=bvc` (voice isolation, billed extra, needs the user's OK).
 4. Deploy and configure the authenticated production token endpoint; keep provider secrets out of distributed clients.
 5. Fix the local Xcode/CoreSimulator mismatch and run iOS (Android already runs on the A142).
-6. Add real release signing credentials/store metadata and keep the automated CI checks green.
+6. Add real release signing credentials/store metadata and keep the local checks (analysis and tests) green.
 7. Move the barge-in / chatter and round-trip test scripts from the scratch folder into the repo if repeated measurements are wanted; make the
    first commit when the user is ready (nothing is committed yet).
 8. Track feature work and current verification in `PROJECT_STATUS.md`; this file remains the architectural record.

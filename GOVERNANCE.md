@@ -23,7 +23,7 @@ Maintainers set project direction, triage reports, approve changes, manage relea
 1. A contributor opens an issue for substantial or breaking work.
 2. The change is implemented on a fork or non-protected branch.
 3. A pull request explains its scope, tests, risks and documentation impact.
-4. Required CI checks pass.
+4. The contributor has run the checks listed in `CONTRIBUTING.md` and reported the results (the repository has no automated CI).
 5. At least one authorized maintainer approves the pull request. The author cannot approve their own change.
 6. A maintainer merges the approved pull request.
 

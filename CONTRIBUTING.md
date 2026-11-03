@@ -9,7 +9,7 @@ The `main` branch is protected by project policy:
 - Do not push or commit directly to `main`.
 - Every change must be submitted through a pull request, including changes made by maintainers.
 - Only maintainers may merge pull requests.
-- A pull request must pass all required CI checks and receive the required maintainer approval before merge.
+- A pull request must report the results of the checks in [Required checks](#required-checks) and receive the required maintainer approval before merge.
 - The pull-request author must not approve their own change.
 - Force pushes and branch deletion on `main` are not allowed.
 
@@ -76,7 +76,7 @@ flutter build apk --debug
 flutter build macos --debug
 ```
 
-If a platform-specific check cannot be run locally, explain why in the pull request. CI must still pass before merge.
+If a platform-specific check cannot be run locally, explain why in the pull request. This repository has no automated CI, so the results you report in the pull request are what the reviewer relies on.
 
 If Gitleaks is installed, scan all committed history before pushing:
 
@@ -84,7 +84,7 @@ If Gitleaks is installed, scan all committed history before pushing:
 gitleaks git . --redact
 ```
 
-The required `Secret scan` workflow repeats this check for every pull request. If it reports a real credential, rotate the credential immediately and follow [`SECURITY.md`](SECURITY.md); removing it only from the newest commit is not sufficient.
+If it reports a real credential, rotate the credential immediately and follow [`SECURITY.md`](SECURITY.md); removing it only from the newest commit is not sufficient.
 
 ## Pull-request expectations
 
@@ -99,6 +99,6 @@ The required `Secret scan` workflow repeats this check for every pull request. I
 
 ## Review and merge
 
-A maintainer reviews correctness, security, tests, compatibility, documentation and scope. Approval is not guaranteed merely because CI passes.
+A maintainer reviews correctness, security, tests, compatibility, documentation and scope. Approval is not guaranteed merely because the checks pass.
 
 Once the required approval and checks pass, a maintainer merges the pull request using the repository's configured merge method. Contributors should not merge their own pull requests unless they are explicitly acting as an authorized maintainer under [GOVERNANCE.md](GOVERNANCE.md).

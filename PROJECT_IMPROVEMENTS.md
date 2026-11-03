@@ -20,16 +20,16 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 
 **Goal:** publish Cryonis as a reusable public repository without exposing maintainer infrastructure, credentials, or unclear licensing obligations.
 
-**Current status:** not ready to make public yet. The project now uses the MIT License, has PR-only contribution governance, community/security policies, a fork-safe LiveKit template, automated secret scanning and a clean local Gitleaks review. Dependency review, Dependabot, SHA-pinned actions, a dependency licence review and an in-app licences screen (OS-9) are now in place. It still needs a decision on the Lumix design reference, public-repository configuration and enforced branch rules.
+**Current status:** not ready to make public yet. The project now uses the MIT License, has PR-only contribution governance, community/security policies, a fork-safe LiveKit template, a clean Gitleaks review, a dependency licence review and an in-app licences screen (OS-9). The CI/CD workflows and Dependabot that were added were removed on 3 November 2026 at the maintainer's request (OS-6). It still needs a decision on the Lumix design reference, public-repository configuration and enforced branch rules.
 
 | Area | Status | Required before public launch |
 |---|---|---|
 | Software license | Ready | MIT License added at the repository root |
-| Secret hygiene | Ready locally | Gitleaks found no leak in the earlier local history (since removed) or the intended public file set; rerun it on the new repository's first commit and require its CI check after launch |
+| Secret hygiene | Ready locally | Gitleaks found no leak in the earlier local history (since removed) or the intended public file set; the Gitleaks run on GitHub passed on the first commit; run it locally before later pushes, since there is no CI |
 | Maintainer-specific configuration | Ready | Real LiveKit configuration is ignored; a placeholder template is tracked |
 | Contributor documentation | Ready | Contribution, governance, conduct, security and support policies added |
 | Issue and pull-request workflow | Partial | PR and issue templates added; GitHub ruleset and real Code Owners still need configuration |
-| CI and dependency security | Ready locally | Secret scan, pull-request dependency review, Dependabot and SHA-pinned actions are added; they take effect only after the repository exists, with the dependency graph and alerts enabled and `Dependency review` required (see OS-6) |
+| CI and dependency security | Removed | The workflows, dependency review and Dependabot were removed at the maintainer's request (3 November 2026); checks run locally and the earlier workflows stay in the Git history (see OS-6) |
 | Dependency licences | Reviewed, 1 follow-up | No GPL, LGPL or AGPL package found in the Dart or Python dependencies; the app now shows its MIT licence and the third-party notices; decide on the Lumix design reference (OS-9) |
 | Releases and changelog | Blocked | Define versioning, changelog and release process |
 | Public onboarding | Partial | Add screenshots, quick start, architecture and fork/deployment guidance |
@@ -48,14 +48,14 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 
 ### OS-3. Add automated secret and privacy checks — completed locally
 
-- **Completed:** `lib/secrets.dart`, `agent/.env.local` and Android signing properties are ignored. [`.github/workflows/security.yml`](.github/workflows/security.yml) runs Gitleaks v3 against a full-history checkout for pushes and pull requests; both third-party actions are pinned to commit SHAs and the workflow has read-only permissions.
+- **Completed:** `lib/secrets.dart`, `agent/.env.local` and Android signing properties are ignored. A Gitleaks workflow ran against a full-history checkout on pushes and pull requests until the CI/CD was removed (OS-6); run Gitleaks locally instead.
 - **Verified 3 November 2026:** Gitleaks 8.30.1 found no leaks in the two earlier commits (that history has since been removed, see item 2) and no leaks in the 1.39 MB intended public file set (tracked files plus non-ignored new files). A separate broad 520 MB workspace scan detected the intentionally ignored `agent/.env.local` credential and generated Flutter/dependency artifacts; none are part of the public file set. Rerun the scan after future commits and before the first push.
 - **Privacy review:** Remove local absolute paths, personal email addresses, device identifiers, private URLs and unnecessary production IDs from public documentation and fixtures.
-- **Failure policy:** Make `Secret scan` a required pull-request check. [`SECURITY.md`](SECURITY.md) documents private reporting and credential rotation; a deleted secret must still be rotated and removed from history when appropriate.
+- **Failure policy:** Run Gitleaks locally before pushing (see `CONTRIBUTING.md`). [`SECURITY.md`](SECURITY.md) documents private reporting and credential rotation; a deleted secret must still be rotated and removed from history when appropriate.
 
 ### OS-4. Add community health files — completed locally
 
-- **Completed:** Added `CONTRIBUTING.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, bug/feature/private-vulnerability forms, a pull-request template, a Code Owners example and a branch-protection configuration guide. Every change must use a pull request, required CI and maintainer approval; only maintainers may merge.
+- **Completed:** Added `CONTRIBUTING.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, bug/feature/private-vulnerability forms, a pull-request template, a Code Owners example and a branch-protection configuration guide. Every change must use a pull request with reported local check results and maintainer approval; only maintainers may merge.
 - **Remaining GitHub setup:** Replace the placeholder security-advisory URL and Code Owner with the real public repository owner/team, enable private vulnerability reporting and enable Discussions if it will be used for support.
 - **Scope clarity:** Explain that contributors supply their own Ollama and LiveKit accounts and that maintainers do not provide shared production credentials or guaranteed free inference quota.
 
@@ -65,13 +65,13 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 - **Implementation:** Separate the public quick start from historical notes. Add copyable example files for Flutter secrets, LiveKit configuration and Android signing; use placeholders everywhere; explain how fork owners change application/bundle IDs.
 - **Acceptance test:** A new contributor should be able to clone the repository, run offline tests and start text chat without access to the maintainer's machine or cloud projects.
 
-### OS-6. Strengthen public CI and dependency maintenance — completed locally
+### OS-6. CI and dependency maintenance — removed at the maintainer's request
 
-- **Current state:** GitHub Actions already runs strict Dart analysis, 104 Flutter tests, 40 Python tests and Android/macOS debug builds.
-- **Completed 3 November 2026:** Every third-party action in all three workflows is pinned to a commit SHA with its release tag in a comment (a search found no `uses:` line without a 40-character SHA). [`dependabot.yml`](.github/dependabot.yml) opens weekly, grouped update pull requests for GitHub Actions, Dart packages (`pub`) and the agent's `uv` lock. [`dependency-review.yml`](.github/workflows/dependency-review.yml) fails a pull request that adds a dependency with a high or critical advisory or an AGPL/GPL licence; change that licence list if the maintainer's policy differs. The three workflows and the Dependabot file pass the SchemaStore schemas for GitHub workflows and Dependabot (checked with `check-jsonschema`). None can run until the repository is on GitHub.
-- **Known gap:** GitHub's list of dependency-graph ecosystems names `pubspec.lock` but not `uv.lock`, so dependency review and Dependabot alerts may not see changes to the Python lock. Dependabot's own `uv` update pull requests are unaffected. To close the gap, add a `pip-audit` step to CI (it reported nothing on the current lock; see item 15) or submit the lock to GitHub's dependency-snapshot API.
-- **Unverified:** Dependabot's `pub` updates run on Dependabot's own Flutter SDK, which may be older than the pinned 3.47.5 (Dart ^3.13); the first run will show whether it can resolve. Android Gradle and Apple native dependencies are left to Flutter tooling.
-- **Still needed after the remote exists:** Enable branch protection and require `Dependency review` once it has reported on a first pull request; enable the dependency graph, Dependabot alerts and security updates.
+- **What was built (3 November 2026):** SHA-pinned GitHub Actions workflows (strict analysis, Flutter and Python tests, Android and macOS debug builds), a Gitleaks secret scan, a pull-request dependency review with an AGPL/GPL deny list, and Dependabot for Actions, Dart packages and the agent's `uv` lock.
+- **What happened:** The first push started them. The secret scan passed; Dependabot opened three update pull requests and the dependency-review job failed on the first two (cause not investigated). Actions was switched off in the repository settings, then the workflows and `dependabot.yml` were deleted, the three pull requests closed and Dependabot's branches removed.
+- **Where they are now:** Only in the Git history, in the first commit `c02d8ad`. Restore them with `git checkout c02d8ad -- .github/workflows .github/dependabot.yml` and re-enable Actions.
+- **What this means:** Nothing automated guards a pull request. Contributors report the results of the local checks in [`CONTRIBUTING.md`](CONTRIBUTING.md), and the maintainer reviews them.
+- **If they are restored:** GitHub's list of dependency-graph ecosystems names `pubspec.lock` but not `uv.lock`, so dependency review and Dependabot alerts may not see changes to the Python lock (a `pip-audit` step would cover it; it reported nothing on the current lock, see item 15). Dependabot's `pub` updates run on its own Flutter SDK, which may be older than the pinned 3.47.5.
 - **Release checks:** Add a release-mode Android build that does not require private signing credentials and verify that public builds contain no development secrets.
 
 ### OS-7. Define releases and project governance
@@ -93,23 +93,23 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 - [ ] Decide whether the Lumix-derived layout needs the designer's permission (OS-9, follow-up 2).
 - [ ] Make the repository public only after the review passes. A private remote exists and `main` is pushed (3 November 2026).
 - [ ] Configure repository description, topics, social preview and default branch. The description and eleven topics are set (3 November 2026); still to do: upload [`docs/social-preview.png`](docs/social-preview.png) under Settings → General → Social preview.
-- [ ] Enable branch protection, required CI checks (including `Secret scan`), vulnerability reporting and dependency alerts.
+- [ ] Enable branch protection (there are no CI checks to require), vulnerability reporting and dependency alerts.
 - [x] Document PR-only governance, maintainer-only merge authority and required branch-protection settings.
 - [ ] Open one test issue and pull request to verify templates, permissions and contributor instructions.
 - [ ] Tag the first pre-release and publish its changelog.
 
 Completed since the original review:
 
-- [x] Consolidated `agent/` and `agent_local/` into one deployed, CI-tested `agent/` implementation.
+- [x] Consolidated `agent/` and `agent_local/` into one deployed, unit-tested `agent/` implementation.
 - [x] Updated the verification counts and deployment documentation.
 - [x] Verified a real hosted English/Hindi call after consolidating the agent.
-- [x] Pinned all CI actions to commit SHAs and added Dependabot plus a pull-request dependency review (OS-6).
+- [x] Pinned all CI actions to commit SHAs and added Dependabot plus a pull-request dependency review (OS-6); all of it was removed again the same day at the maintainer's request.
 - [x] Ran the dependency licence review (OS-9).
 
 ### OS-9. Dependency licence review — completed, one follow-up
 
 - **Method (3 November 2026):** Dart: all 126 packages in `pubspec.lock` (107 in the production graph from `flutter pub deps --no-dev`) were classified by matching the licence text in each package's pub-cache copy; the three the script flagged (`dbus`, `nm`, `file_selector_android`) were read by hand. Python: `pip-licenses --from=mixed` on the agent's locked environment (82 packages, test tools included), plus the licence files of the two LiveKit packages with special terms. This is phrase matching, not legal review.
-- **Result:** no GPL, LGPL or AGPL package in either ecosystem, so the deny list in `dependency-review.yml` would not have blocked any current dependency. Dart: 94 BSD-3-Clause, 16 MIT, 5 Apache-2.0, 1 BSD-2-Clause, 1 Apache-2.0 plus BSD-3-Clause, 2 MPL-2.0, and 7 Flutter SDK packages. Python: almost entirely Apache-2.0, MIT and BSD, with the exceptions below.
+- **Result:** no GPL, LGPL or AGPL package in either ecosystem, so the deny list in the (since removed) dependency-review workflow would not have blocked any current dependency. Dart: 94 BSD-3-Clause, 16 MIT, 5 Apache-2.0, 1 BSD-2-Clause, 1 Apache-2.0 plus BSD-3-Clause, 2 MPL-2.0, and 7 Flutter SDK packages. Python: almost entirely Apache-2.0, MIT and BSD, with the exceptions below.
 - **MPL-2.0 (file-level copyleft, compatible with MIT when unmodified):** Dart `dbus` and `nm`, reached only through `connectivity_plus` from `livekit_client` (D-Bus and NetworkManager clients, so a Linux concern; Cryonis's documented targets are iOS, Android and macOS), and Python `certifi`. Their text mentions the GNU licences only as MPL "secondary licences"; they are not dual-licensed under them.
 - **LiveKit terms, not open source:** `livekit-plugins-noise-cancellation` is declared as "see LiveKit's Terms of Service" and is a service plugin for LiveKit Cloud. `livekit-local-inference`, required by `livekit-agents`, is Apache-2.0 plus the LiveKit Model License, which allows its models only together with the LiveKit Agents framework and forbids using them or their output to build other models. Cryonis uses both as intended. They are installed from PyPI rather than stored in this repository, but a Docker image built from `agent/` contains them, so do not publish such an image; tell fork owners they accept LiveKit's terms when they deploy.
 - **Follow-up 1, licence notices in the app — done 3 November 2026:** The app had no licence screen, and MIT, BSD and Apache licences require their notices to accompany binary distributions. The "Open-source licences" button at the bottom of the server-settings sheet now opens [`licenses_screen.dart`](lib/screens/licenses_screen.dart): Cryonis's own MIT licence in full (the bundled `LICENSE` file, so the text cannot drift), then a "Third-party licences" row that opens Flutter's licence page. That page lists well over a hundred entries because Flutter includes every package and every C++ library inside its engine (ANGLE alone has 58), including packages for platforms Cryonis does not ship; they are kept behind the MIT licence rather than removed, since their licences require the notices to stay with the app. The Inter font's OFL text is registered with `LicenseRegistry` ([`app_licenses.dart`](lib/services/app_licenses.dart)). Tests cover the bundled assets, the registration and the two-step flow; the page was opened on the A142 and showed the registered `Inter (font)` entry.
@@ -120,17 +120,17 @@ Completed since the original review:
 
 ### 1. Production voice agent and tested agent were different — completed
 
-- **What this was:** The deployed implementation lived in `agent_local/`, while CI tested `agent/`.
-- **Resolution:** The bilingual TTS defaults, table-speech filter, active LiveKit ID and scripted-call utility were merged into [`agent/`](agent/). The duplicate folder was removed, and the existing [CI workflow](.github/workflows/ci.yml) now tests the same source that is deployed.
+- **What this was:** The deployed implementation lived in `agent_local/`, while the tests covered `agent/`.
+- **Resolution:** The bilingual TTS defaults, table-speech filter, active LiveKit ID and scripted-call utility were merged into [`agent/`](agent/). The duplicate folder was removed, and the tests now cover the same source that is deployed.
 - **Verification:** 40 Python tests pass, and a hosted call correctly answered two English questions and one Hindi question.
 
 ### 2. Establish a Git baseline — redo under the new account
 
 - **What happened:** A baseline commit (`9459b47`, `Initial Cryonis project baseline`) and two later commits existed locally on `main` and `codex/open-source-readiness`, never pushed. On 3 November 2026 the repository's `.git` folder was moved out of the project so the code can be pushed to a different account; the working files were not changed (295 files before and after). The moved history is kept outside the project as `cryonis-git-history-backup-20261103` next to it, and its commits carried the machine's global Git identity.
 - **Done since:** A new local repository was created the same day with the intended account's name and email set for this project only (the machine's global identity is unchanged), a fresh first commit was made, and `main` was pushed the same day to the private `jadhavrupesh/cryonis` repository over SSH with a dedicated key (the account's other key was left alone). GitHub shows the commit under the account's profile. The off-device backup now exists.
-- **First remote runs:** The Secret scan (Gitleaks) passed on the pushed history, which closes the full-history scan. The CI run had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request on 3 November 2026, so its result is unknown. Dependabot had opened two update pull requests; the Dependency review job failed on both, and the cause was not investigated.
-- **Remaining:** To run CI, dependency review and Dependabot again, re-enable Actions (Settings → Actions → General → Allow all actions). Decide what to do with the two open Dependabot pull requests. The repository stays private until the launch checklist passes.
-- **If we skip it:** A machine failure could lose the project, and none of the CI, secret-scan or dependency checks added so far will ever run.
+- **First remote runs:** The Secret scan (Gitleaks) passed on the pushed history, which closes the full-history scan. The CI run had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request on 3 November 2026, so its result is unknown. Dependabot had opened three update pull requests; the Dependency review job failed on the first two, and the cause was not investigated. The workflows and `dependabot.yml` were then deleted, the three pull requests closed and Dependabot's branches removed.
+- **Remaining:** Nothing automated runs now. To bring the workflows back, restore them from the first commit (`git checkout c02d8ad -- .github/workflows .github/dependabot.yml`) and re-enable Actions (Settings → Actions → General → Allow all actions). The repository stays private until the launch checklist passes.
+- **If we skip it:** A machine failure could lose the project (this one is done: `main` is on GitHub).
 
 ### 3. Move attached images out of SharedPreferences
 
@@ -225,13 +225,13 @@ Completed since the original review:
 - **What this is:** The original review found twelve locked dependency upgrades and contradictory test counts in the documentation.
 - **Progress:** README, project context and project status now consistently report 104 Flutter tests, 40 Python tests and the consolidated agent deployment.
 - **Python lock (uncommitted):** The working tree raises the agent's minimum Python from 3.10 to 3.11 so the lock can use patched Pillow and OpenTelemetry releases (the reason is in `agent/pyproject.toml`), and README and CONTRIBUTING state 3.11–3.14. Checked 3 November 2026: `uv lock --check` and `uv sync --locked` succeed, 40 tests pass, and `pip-audit` finds no known vulnerabilities in the locked packages (runtime and test groups). The Dart packages were not audited.
-- **Remaining fix:** Perform a controlled dependency upgrade, rerun device/build tests, and use CI-generated verification summaries where practical.
+- **Remaining fix:** Perform a controlled dependency upgrade, rerun device/build tests, and record the verification results in the status documents.
 - **If we skip it:** Dependency maintenance debt will continue to accumulate.
 
 ## Recommended execution order
 
 1. ~~Choose the public repository owner/name.~~ Chosen: `jadhavrupesh/cryonis`, private for now.
-2. ~~Add dependency review/updates and finish pinning the remaining GitHub Actions.~~ Done locally on 3 November 2026 (OS-6).
+2. ~~Add dependency review/updates and finish pinning the remaining GitHub Actions.~~ Done, then removed with the rest of the CI/CD on 3 November 2026 (OS-6).
 3. ~~Run the dependency licence inventory~~ (done, OS-9). Commit the work, then rerun Gitleaks after the final public-release commit.
 4. Run the full public-release audit, create the remote, then push the reviewed history.
 5. Replace SharedPreferences image storage and serialize conversation persistence.
