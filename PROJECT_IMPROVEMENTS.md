@@ -139,7 +139,7 @@ Completed since the original review:
 - **Fix:** Resize/compress attachments, store the image bytes in the application-support directory, and persist only file paths and metadata in the conversation record.
 - **If we skip it:** Image-heavy conversations will become progressively slower and less reliable.
 - **Done 3 November 2026 (storage):** Pictures are now saved as files in the app's private support folder, named by a hash of their content, and the preference value keeps only a reference ([`conversation_store.dart`](lib/services/conversation_store.dart)). Identical pictures share one file, files no longer used are deleted on the next save, files are written then renamed, and if the disk refuses a file the picture stays inline so nothing is lost. A conversation saved the old way is read as before and moved to files the next time it is saved. A saved file name is only read if it matches the hash pattern, never as a path. Unit tests cover this (14 for the store, 2 through the controller).
-- **Still open:** Pictures are not resized or compressed (a 5 MB picture is still stored and held in memory at full size), and they are still held in memory as base64 and decoded during widget builds (item 9). Whether this works on a real phone has not been checked yet: `integration_test/conversation_store_device_test.dart` exists for that and has not been run, because the phone was disconnected.
+- **Still open:** Pictures are not resized or compressed (a 5 MB picture is still stored and held in memory at full size), and they are still held in memory as base64 and decoded during widget builds (item 9). Checked on the A142 (Android 16) on 3 November 2026: `integration_test/conversation_store_device_test.dart` saved a 3 MB picture as a file in the app's private folder (`files/`), left the saved conversation under 1,000 characters, and read the picture back byte for byte. The full attach-and-send flow through the picker was not driven by hand.
 
 ### 4. Serialize conversation persistence — completed
 
@@ -237,7 +237,7 @@ Completed since the original review:
 2. ~~Add dependency review/updates and finish pinning the remaining GitHub Actions.~~ Done, then removed with the rest of the CI/CD on 3 November 2026 (OS-6).
 3. ~~Run the dependency licence inventory~~ (done, OS-9). Commit the work, then rerun Gitleaks after the final public-release commit.
 4. Run the full public-release audit, create the remote, then push the reviewed history.
-5. ~~Replace SharedPreferences image storage and serialize conversation persistence.~~ Done 3 November 2026 (items 3 and 4); picture resizing and a run on a real phone remain.
+5. ~~Replace SharedPreferences image storage and serialize conversation persistence.~~ Done 3 November 2026 (items 3 and 4); picture resizing remains; the storage was checked on the A142.
 6. Implement production authentication and restrict Android cleartext traffic.
 7. Fix the final voice-transcript shutdown race.
 8. Add model capability checks and harden image processing/settings validation.
