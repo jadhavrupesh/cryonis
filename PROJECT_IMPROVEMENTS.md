@@ -6,13 +6,13 @@
 
 ## What this repository does
 
-Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-device dictation, and LiveKit-powered voice conversations in English and Hindi. The automated baseline is healthy: strict Dart analysis passes, all 104 Flutter tests pass, and all 40 Python voice-agent tests pass.
+Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-device dictation, and LiveKit-powered voice conversations in English and Hindi. The automated baseline is healthy: strict Dart analysis passes, all 120 Flutter tests pass, and all 40 Python voice-agent tests pass.
 
 ## Progress summary
 
 | Priority | Done | Partial | Remaining |
 |---|---:|---:|---:|
-| Must fix | 1 | 0 | 6 |
+| Must fix | 3 | 1 | 3 |
 | Should fix | 0 | 0 | 5 |
 | Nice to have | 0 | 1 | 2 |
 
@@ -124,7 +124,7 @@ Completed since the original review:
 - **Resolution:** The bilingual TTS defaults, table-speech filter, active LiveKit ID and scripted-call utility were merged into [`agent/`](agent/). The duplicate folder was removed, and the tests now cover the same source that is deployed.
 - **Verification:** 40 Python tests pass, and a hosted call correctly answered two English questions and one Hindi question.
 
-### 2. Establish a Git baseline — redo under the new account
+### 2. Establish a Git baseline — completed
 
 - **What happened:** A baseline commit (`9459b47`, `Initial Cryonis project baseline`) and two later commits existed locally on `main` and `codex/open-source-readiness`, never pushed. On 3 November 2026 the repository's `.git` folder was moved out of the project so the code can be pushed to a different account; the working files were not changed (295 files before and after). The moved history is kept outside the project as `cryonis-git-history-backup-20261103` next to it, and its commits carried the machine's global Git identity.
 - **Done since:** A new local repository was created the same day with the intended account's name and email set for this project only (the machine's global identity is unchanged), a fresh first commit was made, and `main` was pushed the same day to the private `jadhavrupesh/cryonis` repository over SSH with a dedicated key (the account's other key was left alone). GitHub shows the commit under the account's profile. The off-device backup now exists.
@@ -132,19 +132,22 @@ Completed since the original review:
 - **Remaining:** Nothing automated runs now. To bring the workflows back, restore them from the first commit (`git checkout c02d8ad -- .github/workflows .github/dependabot.yml`) and re-enable Actions (Settings → Actions → General → Allow all actions). The repository stays private until the launch checklist passes.
 - **If we skip it:** A machine failure could lose the project (this one is done: `main` is on GitHub).
 
-### 3. Move attached images out of SharedPreferences
+### 3. Move attached images out of SharedPreferences — storage moved, resizing still open
 
 - **What this is:** Up to four 5 MB images are converted to base64 in [`image_attachment_picker.dart`](lib/services/image_attachment_picker.dart), embedded in chat JSON through [`chat_message.dart`](lib/models/chat_message.dart), and saved as one preference value by [`chat_controller.dart`](lib/state/chat_controller.dart).
 - **Problem:** Four maximum-size images become roughly 26.7 MB after base64 expansion. Large preference values can slow startup, stall the UI, or fail to persist.
 - **Fix:** Resize/compress attachments, store the image bytes in the application-support directory, and persist only file paths and metadata in the conversation record.
 - **If we skip it:** Image-heavy conversations will become progressively slower and less reliable.
+- **Done 3 November 2026 (storage):** Pictures are now saved as files in the app's private support folder, named by a hash of their content, and the preference value keeps only a reference ([`conversation_store.dart`](lib/services/conversation_store.dart)). Identical pictures share one file, files no longer used are deleted on the next save, files are written then renamed, and if the disk refuses a file the picture stays inline so nothing is lost. A conversation saved the old way is read as before and moved to files the next time it is saved. A saved file name is only read if it matches the hash pattern, never as a path. Unit tests cover this (14 for the store, 2 through the controller).
+- **Still open:** Pictures are not resized or compressed (a 5 MB picture is still stored and held in memory at full size), and they are still held in memory as base64 and decoded during widget builds (item 9). Whether this works on a real phone has not been checked yet: `integration_test/conversation_store_device_test.dart` exists for that and has not been run, because the phone was disconnected.
 
-### 4. Serialize conversation persistence
+### 4. Serialize conversation persistence — completed
 
 - **What this is:** Conversation writes and removals are fire-and-forget operations in [`chat_controller.dart`](lib/state/chat_controller.dart).
 - **Problem:** Starting a new chat calls `reset()` immediately before `send()` in [`home_screen.dart`](lib/screens/home_screen.dart). Removal and replacement are not one atomic operation, and the app can terminate before a write completes.
 - **Fix:** Introduce a persistence repository with one queued or debounced write operation. Make conversation replacement atomic and flush important changes during lifecycle shutdown.
 - **If we skip it:** A recently updated chat or voice transcript may occasionally disappear after restart.
+- **Done 3 November 2026:** `ConversationStore` ([`conversation_store.dart`](lib/services/conversation_store.dart)) sends every change through one queue: writes cannot overlap or finish out of order, a newer snapshot replaces one that has not started yet, and "clear, then save" is a single write of the new text instead of "remove, then set". `ChatController.flush()` completes when everything queued is written, and the app calls it whenever it leaves the foreground. That last part is best effort: the system can still stop the app before a write finishes. The original race lived in the platform's asynchronous writes, which a unit test cannot reproduce, so the tests check the queue's behaviour (order, replacement, bursts, failures) rather than the old failure itself. The two keys (conversation and time) are still written one after the other.
 
 ### 5. Complete production voice authentication
 
@@ -223,7 +226,7 @@ Completed since the original review:
 ### 15. Keep dependencies and documentation current — documentation completed
 
 - **What this is:** The original review found twelve locked dependency upgrades and contradictory test counts in the documentation.
-- **Progress:** README, project context and project status now consistently report 104 Flutter tests, 40 Python tests and the consolidated agent deployment.
+- **Progress:** README, project context and project status now consistently report 120 Flutter tests, 40 Python tests and the consolidated agent deployment.
 - **Python lock (uncommitted):** The working tree raises the agent's minimum Python from 3.10 to 3.11 so the lock can use patched Pillow and OpenTelemetry releases (the reason is in `agent/pyproject.toml`), and README and CONTRIBUTING state 3.11–3.14. Checked 3 November 2026: `uv lock --check` and `uv sync --locked` succeed, 40 tests pass, and `pip-audit` finds no known vulnerabilities in the locked packages (runtime and test groups). The Dart packages were not audited.
 - **Remaining fix:** Perform a controlled dependency upgrade, rerun device/build tests, and record the verification results in the status documents.
 - **If we skip it:** Dependency maintenance debt will continue to accumulate.
@@ -234,7 +237,7 @@ Completed since the original review:
 2. ~~Add dependency review/updates and finish pinning the remaining GitHub Actions.~~ Done, then removed with the rest of the CI/CD on 3 November 2026 (OS-6).
 3. ~~Run the dependency licence inventory~~ (done, OS-9). Commit the work, then rerun Gitleaks after the final public-release commit.
 4. Run the full public-release audit, create the remote, then push the reviewed history.
-5. Replace SharedPreferences image storage and serialize conversation persistence.
+5. ~~Replace SharedPreferences image storage and serialize conversation persistence.~~ Done 3 November 2026 (items 3 and 4); picture resizing and a run on a real phone remain.
 6. Implement production authentication and restrict Android cleartext traffic.
 7. Fix the final voice-transcript shutdown race.
 8. Add model capability checks and harden image processing/settings validation.

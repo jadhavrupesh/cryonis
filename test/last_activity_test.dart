@@ -26,6 +26,7 @@ void main() {
     chat.send('hello');
     expect(chat.lastActivity, isNotNull);
     expect(chat.lastActivity!.isAfter(before), isTrue);
+    await chat.flush();
     expect(prefs.getInt(ChatController.activityKey), isNotNull);
 
     final restored = _controller(prefs);
@@ -47,6 +48,7 @@ void main() {
     chat.reset();
 
     expect(chat.lastActivity, isNull);
+    await chat.flush();
     expect(prefs.getInt(ChatController.activityKey), isNull);
   });
 

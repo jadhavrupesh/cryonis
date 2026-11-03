@@ -37,6 +37,11 @@ dependencies:
   http: ^1.6.0
   speech_to_text: ^7.5.0
   shared_preferences: ^2.5.6
+  # Attached pictures are saved as files in the app's support folder, named by
+  # a hash of their content (lib/services/conversation_store.dart). Both
+  # packages were already in the dependency tree through other packages.
+  path_provider: ^2.1.5
+  crypto: ^3.0.6
   flutter_secure_storage: ^11.2.0
   file_selector: ^1.0.4
   flutter_markdown_plus: ^1.0.12

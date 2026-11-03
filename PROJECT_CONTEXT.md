@@ -11,7 +11,7 @@ restyled to it on 2 Nov 2026; the full analysis (frame-by-frame timeline, measur
 (The first version followed "AI Agent Mobile App UI Animation…" by vino_costa, an orange-aurora look; that styling is gone.)
 
 - Project path: `/Users/rupeshjadhav/StudioProjects/cryonis`
-- Status (text chat): all screens are built and wired to Ollama; analyzer clean (`--fatal-infos`), 104 Flutter tests and 40 agent tests pass.
+- Status (text chat): all screens are built and wired to Ollama; analyzer clean (`--fatal-infos`), 120 Flutter tests and 40 agent tests pass.
   Debug builds succeed for macOS and Android. A real chat on Ollama Cloud (free model,
   real key, sandboxed app) is covered by `integration_test/native_chat_test.dart`.
 - Status (UI): **restyled on 2 Nov 2026** to the Lumix shot (see below and `UI_SPEC.md`): Home, Chat and both voice screens, the header,
@@ -227,7 +227,8 @@ against the server's `/v1/models` and `/v1/audio/voices`.
 - `http` — streaming HTTP (a fresh client per chat request so it can be aborted)
 - `speech_to_text` — on-device voice input for the dictation mode (Ollama has no voice; the transcript is sent as a normal text message)
 - `livekit_client` 2.13.2 (brings `flutter_webrtc` 1.6.3) — the live voice call
-- `shared_preferences` — saved server address, selected model, conversation, LiveKit endpoint, and sandbox ID
+- `shared_preferences` — saved server address, selected model, the conversation text, LiveKit endpoint, and sandbox ID
+- `path_provider` and `crypto` — attached pictures are saved as files in the app's support folder, named by a content hash (`lib/services/conversation_store.dart`)
 - `flutter_secure_storage` — Ollama API-key storage with migration from the former preferences value
 - `file_selector` — PNG/JPG/WebP image prompts (up to four images, 5 MB each)
 - `flutter_markdown_plus` (+ `markdown`) — answer rendering (the original `flutter_markdown` is discontinued); `flutter_highlight` —
@@ -291,7 +292,7 @@ test/
   ollama_service_test.dart, chat_controller_test.dart, markdown_view_test.dart,
   agent_voice_screen_test.dart, voice_flow_test.dart, api_key_store_test.dart,
   chat_message_test.dart, image_attachment_picker_test.dart, widget_test.dart, voice_widgets_test.dart, app_header_test.dart,
-  last_activity_test.dart, utils/relative_time_test.dart, app_licenses_test.dart   (104 tests at last full run)
+  last_activity_test.dart, utils/relative_time_test.dart, app_licenses_test.dart, conversation_store_test.dart   (120 tests at last full run)
 integration_test/
   native_chat_test.dart   # real chat inside the macOS app; spends a little free quota
   voice_ui_preview_test.dart  # renders Home, Chat and the voice screen in every state to PNGs in the app container (no network, no key)

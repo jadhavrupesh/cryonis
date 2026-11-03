@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cryonis/models/chat_message.dart';
 import 'package:cryonis/services/api_key_store.dart';
+import 'package:cryonis/services/conversation_store.dart';
 import 'package:cryonis/services/ollama_service.dart';
 import 'package:cryonis/state/chat_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -418,10 +420,60 @@ void main() {
 
       expect(chat.messages.single.content, 'valid');
       chat.reset();
+      await chat.flush();
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString(ChatController.conversationKey), isNull);
     },
   );
+
+  test('a new chat started right after clearing the old one is what is saved', () async {
+    final chat = await _controller(fakeOllama.call);
+    await chat.refreshModels();
+    chat.send('old question');
+    await _untilIdle(chat);
+
+    // The home screen does exactly this when you type into a fresh prompt.
+    chat.reset();
+    chat.send('new question');
+    await _untilIdle(chat);
+    await chat.flush();
+
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(ChatController.conversationKey)!;
+    expect(saved, contains('new question'));
+    expect(saved, isNot(contains('old question')));
+  });
+
+  test('with a pictures folder an image prompt is saved as a file, not in preferences', () async {
+    final directory = Directory.systemTemp.createTempSync('controller_images_');
+    addTearDown(() => directory.deleteSync(recursive: true));
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    ChatController build() => ChatController(
+      service: OllamaService(
+        baseUrl: 'http://localhost:11434',
+        clientFactory: fakeOllama.call,
+      ),
+      prefs: prefs,
+      conversationStore: ConversationStore(prefs, imagesDirectory: directory),
+    );
+    final chat = build();
+    await chat.refreshModels();
+    const image = ChatImage(
+      name: 'planet.png',
+      mimeType: 'image/png',
+      base64Data: 'cG5n',
+    );
+
+    chat.send('What is this?', images: [image]);
+    await _untilIdle(chat);
+    await chat.flush();
+
+    expect(prefs.getString(ChatController.conversationKey), isNot(contains('cG5n')));
+    expect(directory.listSync(), hasLength(1));
+    // After a restart the picture is back, ready to be sent again.
+    expect(build().messages.first.images.single.base64Data, 'cG5n');
+  });
 
   test('image prompts are sent to Ollama and persisted', () async {
     final captured = <Map<String, dynamic>>[];
@@ -438,6 +490,7 @@ void main() {
 
     final messages = captured.single['messages'] as List<dynamic>;
     expect((messages[1] as Map<String, dynamic>)['images'], ['cG5n']);
+    await chat.flush();
     final prefs = await SharedPreferences.getInstance();
     expect(
       prefs.getString(ChatController.conversationKey),

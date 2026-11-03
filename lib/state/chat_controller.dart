@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../app_config.dart';
 import '../models/chat_message.dart';
 import '../services/api_key_store.dart';
+import '../services/conversation_store.dart';
 import '../services/ollama_service.dart';
 
 enum Connection { checking, online, offline }
@@ -18,10 +18,12 @@ class ChatController extends ChangeNotifier {
     required this._service,
     required this._prefs,
     ApiKeyStore? apiKeyStore,
+    ConversationStore? conversationStore,
     String livekitSandboxId = '',
     String livekitTokenEndpoint = '',
   }) : _selectedModel = _prefs.getString(_modelKey),
        _apiKeyStore = apiKeyStore ?? ApiKeyStore(MemorySecretStore()),
+       _store = conversationStore ?? ConversationStore(_prefs),
        _livekitSandboxId = _prefs.getString(_livekitKey) ?? livekitSandboxId,
        _livekitTokenEndpoint = _validTokenEndpoint(
          _prefs.getString(_livekitTokenEndpointKey) ?? livekitTokenEndpoint,
@@ -33,8 +35,8 @@ class ChatController extends ChangeNotifier {
   static const _modelKey = 'ollama_model';
   static const _livekitKey = 'livekit_sandbox_id';
   static const _livekitTokenEndpointKey = 'livekit_token_endpoint';
-  static const conversationKey = 'chat_messages_v1';
-  static const activityKey = 'chat_last_activity_v1';
+  static const conversationKey = ConversationStore.conversationKey;
+  static const activityKey = ConversationStore.activityKey;
 
   /// Reads the saved server address, falling back to the platform default.
   static String savedBaseUrl(SharedPreferences prefs) =>
@@ -43,6 +45,7 @@ class ChatController extends ChangeNotifier {
   final OllamaService _service;
   final SharedPreferences _prefs;
   final ApiKeyStore _apiKeyStore;
+  final ConversationStore _store;
 
   final List<ChatMessage> _messages = [];
   StreamSubscription<String>? _subscription;
@@ -306,52 +309,24 @@ class ChatController extends ChangeNotifier {
   }
 
   void _restoreConversation() {
-    final saved = _prefs.getString(conversationKey);
-    if (saved == null) return;
-    final activity = _prefs.getInt(activityKey);
-    if (activity != null) {
-      _lastActivity = DateTime.fromMillisecondsSinceEpoch(activity);
-    }
-    try {
-      final decoded = jsonDecode(saved);
-      if (decoded is! List<dynamic>) throw const FormatException();
-      for (final value in decoded) {
-        try {
-          if (value is Map<String, dynamic>) {
-            _messages.add(ChatMessage.fromJson(value));
-          }
-        } on FormatException {
-          // A single corrupt record should not hide the valid conversation.
-        } on TypeError {
-          // Nested attachment data can also be malformed; skip that record.
-        }
-      }
-    } on FormatException {
-      unawaited(_prefs.remove(conversationKey));
-    }
+    final saved = _store.load();
+    _messages.addAll(saved.messages);
+    _lastActivity = saved.lastActivity;
   }
 
+  /// Hands the conversation to the store, which writes one change at a time.
   void _persistConversation() {
     if (_messages.isEmpty) {
       _lastActivity = null;
-      unawaited(_prefs.remove(conversationKey));
-      unawaited(_prefs.remove(activityKey));
+      _store.clear();
       return;
     }
     _lastActivity = DateTime.now();
-    unawaited(
-      _prefs.setInt(activityKey, _lastActivity!.millisecondsSinceEpoch),
-    );
-    final stable = _messages.where(
-      (message) => message.content.isNotEmpty || message.images.isNotEmpty,
-    );
-    unawaited(
-      _prefs.setString(
-        conversationKey,
-        jsonEncode([for (final message in stable) message.toJson()]),
-      ),
-    );
+    _store.save(_messages, _lastActivity!);
   }
+
+  /// Completes when every conversation change made so far has been saved.
+  Future<void> flush() => _store.flush();
 
   @override
   void dispose() {

@@ -53,7 +53,7 @@
 | **Free-tier friendly** | The model picker lists Ollama Cloud's free models. A local Ollama server works too. |
 | **Private by default** | API keys live in the Keychain or Keystore, are only sent to `https` addresses, and no account is needed. |
 | **Designed, not themed** | A black canvas, charcoal surfaces, a silver accent, Inter type, and a ring of dots that moves differently while Cryo listens, hears, thinks and speaks ([design notes](UI_SPEC.md)). |
-| **Tested** | 104 Flutter tests and 40 Python agent tests, strict static analysis, and an in-app licences screen. |
+| **Tested** | 120 Flutter tests and 40 Python agent tests, strict static analysis, and an in-app licences screen. |
 
 ## How it works
 
@@ -91,7 +91,7 @@ Then open the settings sheet (the menu icon), choose **Ollama Cloud**, paste an 
 - **Voice:** on-device dictation and the live LiveKit call screen, with recoverable call retries. The ring animates per phase of the agent's loop: listening (breathing, outward ripples), your words arriving (inward ripples), thinking (an orbiting arc) and speaking (ripples driven by Cryo's voice).
 - **Voice agent (deployed on LiveKit Cloud):** [agent/](agent/README.md) is the single source of truth. It supports English and Hindi, `gpt-oss:120b`, the Hindi/Hinglish Cartesia voice setting, background-noise filtering, table-aware speech cleanup, per-turn latency and interruption logging, and a spoken greeting. Contributors deploy it to their own LiveKit Cloud project using the public example configuration.
 - Ollama API keys use secure platform storage; older plain-text preferences are migrated automatically.
-- 104 Flutter tests and 40 Python agent tests pass; macOS and Android debug builds are supported. The app has been run on an Android phone (A142, Android 16): a call started from it reached the deployed agent and speech was transcribed (2 Nov 2026).
+- 120 Flutter tests and 40 Python agent tests pass; macOS and Android debug builds are supported. The app has been run on an Android phone (A142, Android 16): a call started from it reached the deployed agent and speech was transcribed (2 Nov 2026).
 - **Not verified:** how a live call sounds to a real listener (audio quality, interrupting it, reconnecting) and a signed release build.
 - If a call hangs on "Connecting…", check the agent still exists: `lk agent list` (on 2 Nov it had vanished from the project and was re-created).
 - The LiveKit sandbox token flow is development-only. Use an authenticated token endpoint before production.
@@ -257,7 +257,7 @@ It spends a little of the free call credit per run, so keep the question list sh
 - The attach control accepts PNG, JPG/JPEG, and WebP files.
 - A prompt can contain up to four images, with a 5 MB limit per image.
 - Images are encoded for Ollama's `images` message field, so select a vision-capable model.
-- Completed and partial conversations, including image prompts, are saved locally.
+- Completed and partial conversations, including image prompts, are saved locally. Pictures are stored as files in the app's private folder rather than in preferences, and saving goes through a queue so a new chat can never race the one it replaces.
 - Use **Previous conversations** on the home screen to resume, or start a new prompt to clear the old conversation.
 
 ## Test and build
