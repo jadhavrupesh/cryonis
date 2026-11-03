@@ -8,7 +8,7 @@
 | Area | Status | Evidence |
 |---|---|---|
 | Strict Dart analysis | Done | `dart analyze . --fatal-infos` passes |
-| Flutter tests | Done | 120 tests pass |
+| Flutter tests | Done | 159 tests pass |
 | Python voice-agent tests | Done | 40 tests pass (settings, language, TTS, table cleanup, noise filter, interruption timing, latency logging) |
 | macOS debug build | Done | `flutter build macos --debug` succeeds |
 | Android debug build | Done | `flutter build apk --debug` succeeds |
@@ -124,7 +124,7 @@
 
 ```text
 dart analyze . --fatal-infos             PASS
-flutter test                             PASS — 120 tests
+flutter test                             PASS — 159 tests
 cd agent && uv run pytest -q             PASS — 40 tests
 flutter build macos --debug              PASS
 flutter build apk --debug                PASS

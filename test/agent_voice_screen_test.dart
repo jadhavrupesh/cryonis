@@ -9,6 +9,20 @@ import 'fake_voice_backend.dart';
 const _hello = VoiceLine(id: '1', fromUser: true, text: 'Hello there');
 const _reply = VoiceLine(id: '2', fromUser: false, text: 'Hi! How can I help?');
 
+/// A call whose last transcript line arrives during shutdown, as it can when
+/// the connection closes just after the agent finishes a sentence.
+class _LateLineBackend extends FakeVoiceBackend {
+  _LateLineBackend(this._late, {super.lines}) : super(phase: AgentPhase.listening);
+
+  final VoiceLine _late;
+
+  @override
+  Future<void> end() async {
+    await super.end();
+    emit(lines: [...lines, _late]);
+  }
+}
+
 /// Opens the call screen from a button and records what it pops with.
 class _Harness {
   _Harness(this.backends);
@@ -262,6 +276,46 @@ void main() {
       (ChatRole.assistant, 'Hi! How can I help?'),
     ]);
     expect(find.text('open'), findsOneWidget);
+  });
+
+  testWidgets('a sentence that arrives while the call shuts down is kept', (
+    tester,
+  ) async {
+    const last = VoiceLine(id: '3', fromUser: false, text: 'Goodbye for now!');
+    final backend = _LateLineBackend(last, lines: [_hello, _reply]);
+    final harness = _Harness([backend]);
+    await harness.open(tester);
+
+    await tester.tap(find.byTooltip('End voice and continue in chat'));
+    await _settle(tester);
+
+    expect(backend.endCalls, 1);
+    final turns = harness.result as List<ChatMessage>;
+    expect(turns.map((message) => message.content), [
+      'Hello there',
+      'Hi! How can I help? Goodbye for now!',
+    ]);
+  });
+
+  testWidgets('the transcript is kept even if ending the call throws', (
+    tester,
+  ) async {
+    final backend = FakeVoiceBackend(
+      phase: AgentPhase.listening,
+      lines: [_hello, _reply],
+      endError: StateError('already disconnected'),
+    );
+    final harness = _Harness([backend]);
+    await harness.open(tester);
+
+    await tester.tap(find.byTooltip('End voice and continue in chat'));
+    await _settle(tester);
+
+    final turns = harness.result as List<ChatMessage>;
+    expect(turns.map((message) => message.content), [
+      'Hello there',
+      'Hi! How can I help?',
+    ]);
   });
 
   testWidgets('an end exception does not trap the user on the call screen', (

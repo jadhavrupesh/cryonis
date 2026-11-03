@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plain http is refused except to this device itself and to the Android
+  emulator's host machine (a local Ollama server). Everything else must use
+  https. Debug and profile builds replace this file with a permissive one
+  (src/debug and src/profile) so a developer's phone can reach Ollama on a
+  laptop's LAN address.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

@@ -52,3 +52,68 @@ bool isCloudUrl(String url) {
   final host = Uri.tryParse(url)?.host ?? '';
   return host == 'ollama.com' || host.endsWith('.ollama.com');
 }
+
+/// How well a server address protects the prompts sent to it.
+enum ServerSecurity {
+  /// `https`: encrypted in transit.
+  encrypted,
+
+  /// Plain http, but to this device or the Android emulator's host machine, so
+  /// the traffic never crosses a network.
+  thisDevice,
+
+  /// Plain http to a computer on the local network (a private address, a
+  /// `.local` name or a single-word name). Readable by anyone on that network.
+  localNetwork,
+
+  /// Plain http to an address on the internet. Anyone on the path can read it.
+  exposed,
+
+  /// Not an http(s) address with a host.
+  invalid,
+}
+
+/// Classifies [url] (as typed or saved) by what protects its traffic.
+ServerSecurity serverSecurity(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || uri.host.isEmpty) return ServerSecurity.invalid;
+  switch (uri.scheme.toLowerCase()) {
+    case 'https':
+      return ServerSecurity.encrypted;
+    case 'http':
+      break;
+    default:
+      return ServerSecurity.invalid;
+  }
+  final host = uri.host.toLowerCase();
+  if (host == 'localhost' ||
+      host == '10.0.2.2' || // the Android emulator's host machine
+      host == '::1' ||
+      host.startsWith('127.')) {
+    return ServerSecurity.thisDevice;
+  }
+  if (host.endsWith('.local') || !host.contains('.') && !host.contains(':')) {
+    return ServerSecurity.localNetwork;
+  }
+  final v4 = RegExp(r'^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$')
+      .firstMatch(host);
+  if (v4 != null) {
+    final a = int.parse(v4.group(1)!);
+    final b = int.parse(v4.group(2)!);
+    final private =
+        a == 10 ||
+        (a == 172 && b >= 16 && b <= 31) ||
+        (a == 192 && b == 168) ||
+        (a == 169 && b == 254);
+    return private ? ServerSecurity.localNetwork : ServerSecurity.exposed;
+  }
+  if (host.contains(':')) {
+    // IPv6: unique-local (fc00::/7) and link-local (fe80::/10) stay on the LAN.
+    final first = host.split(':').first;
+    final isLan =
+        RegExp(r'^f[cd][0-9a-f]{2}$').hasMatch(first) ||
+        RegExp(r'^fe[89ab][0-9a-f]$').hasMatch(first);
+    return isLan ? ServerSecurity.localNetwork : ServerSecurity.exposed;
+  }
+  return ServerSecurity.exposed;
+}

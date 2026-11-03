@@ -6,13 +6,13 @@
 
 ## What this repository does
 
-Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-device dictation, and LiveKit-powered voice conversations in English and Hindi. The automated baseline is healthy: strict Dart analysis passes, all 120 Flutter tests pass, and all 40 Python voice-agent tests pass.
+Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-device dictation, and LiveKit-powered voice conversations in English and Hindi. The automated baseline is healthy: strict Dart analysis passes, all 159 Flutter tests pass, and all 40 Python voice-agent tests pass.
 
 ## Progress summary
 
 | Priority | Done | Partial | Remaining |
 |---|---:|---:|---:|
-| Must fix | 3 | 1 | 3 |
+| Must fix | 5 | 1 | 1 |
 | Should fix | 0 | 0 | 5 |
 | Nice to have | 0 | 1 | 2 |
 
@@ -156,19 +156,24 @@ Completed since the original review:
 - **Fix:** Add product sign-in/session handling and inject a short-lived bearer or session token into the LiveKit endpoint request. Keep LiveKit API secrets on the server.
 - **If we skip it:** Voice must use an insecure public endpoint or remain dependent on the development sandbox.
 
-### 6. Restrict Android cleartext networking
+### 6. Restrict Android cleartext networking — completed
 
 - **What this is:** [`AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml) globally enables `android:usesCleartextTraffic="true"` so Android can reach a local Ollama server.
 - **Problem:** Release builds can also send prompts and responses to arbitrary plaintext HTTP endpoints.
 - **Fix:** Scope HTTP access with an Android network-security configuration or a developer/local-server flavor, and warn users when a physical device connects to a plaintext server.
 - **If we skip it:** Traffic sent to a remote HTTP endpoint can be intercepted on an untrusted network.
+- **Done 3 November 2026:** The blanket `usesCleartextTraffic="true"` is gone; the manifest now points at a network security config that allows plain http only to `localhost`, `127.0.0.1` and `10.0.2.2` ([`network_security_config.xml`](android/app/src/main/res/xml/network_security_config.xml)).
+- **Found by testing on the A142:** that Android setting does **not** restrict this app's Ollama traffic. With the strict config in force, a plain-http request from Dart's HTTP client to a public host still left the device and got a reply (`integration_test/cleartext_policy_test.dart`). It only governs Android's own network stacks, so it is kept as a second layer, not as the fix.
+- **The actual fix is in the app:** [`serverSecurity`](lib/app_config.dart) sorts an address into encrypted (https), this device (localhost, the emulator host), local network (private IPs, `.local`, single-word names) or internet. `OllamaService` refuses plain http to an internet address for both model lists and chat. The settings sheet warns about a plain-http local-network address and says an internet one is blocked. An address typed without a scheme now gets https unless it is local. The API key was already only ever sent over https. Tests: `test/server_security_test.dart` (36 cases).
+- **What changes for users:** Ollama on a laptop reached by LAN IP over http still works, with a warning. Ollama on a public address over http no longer works; use https. iOS already limited plain http to local networking (`NSAllowsLocalNetworking`).
 
-### 7. Capture the final voice transcript after shutdown
+### 7. Capture the final voice transcript after shutdown — completed
 
 - **What this is:** `_finishVoice()` reads `_backend.lines` before awaiting `_backend.end()` in [`agent_voice_screen.dart`](lib/screens/agent_voice_screen.dart).
 - **Problem:** A final transcript update arriving during shutdown is not included when the call moves into text chat.
 - **Fix:** End the backend first, wait for its final transcript event, then call `conversationFrom(_backend.lines)`. Add a fake-backend test that appends a final line during `end()`.
 - **If we skip it:** The last user sentence or assistant answer may intermittently disappear.
+- **Done 3 November 2026:** `_finishVoice()` now ends the call first and reads the transcript afterwards, even when ending throws. A test whose fake call adds a last sentence during `end()` fails on the old code and passes now. The real backend's transcript comes from the session's messages, which stay readable after `end()`; whether a late sentence actually arrives in a real call was not exercised.
 
 ## Should fix
 
@@ -226,7 +231,7 @@ Completed since the original review:
 ### 15. Keep dependencies and documentation current — documentation completed
 
 - **What this is:** The original review found twelve locked dependency upgrades and contradictory test counts in the documentation.
-- **Progress:** README, project context and project status now consistently report 120 Flutter tests, 40 Python tests and the consolidated agent deployment.
+- **Progress:** README, project context and project status now consistently report 159 Flutter tests, 40 Python tests and the consolidated agent deployment.
 - **Python lock (uncommitted):** The working tree raises the agent's minimum Python from 3.10 to 3.11 so the lock can use patched Pillow and OpenTelemetry releases (the reason is in `agent/pyproject.toml`), and README and CONTRIBUTING state 3.11–3.14. Checked 3 November 2026: `uv lock --check` and `uv sync --locked` succeed, 40 tests pass, and `pip-audit` finds no known vulnerabilities in the locked packages (runtime and test groups). The Dart packages were not audited.
 - **Remaining fix:** Perform a controlled dependency upgrade, rerun device/build tests, and record the verification results in the status documents.
 - **If we skip it:** Dependency maintenance debt will continue to accumulate.
@@ -238,8 +243,8 @@ Completed since the original review:
 3. ~~Run the dependency licence inventory~~ (done, OS-9). Commit the work, then rerun Gitleaks after the final public-release commit.
 4. Run the full public-release audit, create the remote, then push the reviewed history.
 5. ~~Replace SharedPreferences image storage and serialize conversation persistence.~~ Done 3 November 2026 (items 3 and 4); picture resizing remains; the storage was checked on the A142.
-6. Implement production authentication and restrict Android cleartext traffic.
-7. Fix the final voice-transcript shutdown race.
+6. Implement production authentication (open, needs a decision on the sign-in method and a token service) ~~and restrict Android cleartext traffic~~ (done 3 November 2026).
+7. ~~Fix the final voice-transcript shutdown race.~~ Done 3 November 2026.
 8. Add model capability checks and harden image processing/settings validation.
 9. Run real bilingual audio QA, then improve per-turn TTS language selection.
 10. Add multi-conversation history and optional image generation.

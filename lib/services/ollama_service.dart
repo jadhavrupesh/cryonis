@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../app_config.dart';
 import '../models/chat_message.dart';
 
 class OllamaException implements Exception {
@@ -64,7 +65,14 @@ class OllamaService {
   static String normalizeBaseUrl(String input) {
     var url = input.trim();
     if (url.isEmpty) return url;
-    if (!url.contains('://')) url = 'http://$url';
+    if (!url.contains('://')) {
+      // An address typed without a scheme gets plain http only where that is
+      // acceptable (this device, the local network); anything on the internet
+      // gets https.
+      url = serverSecurity('http://$url') == ServerSecurity.exposed
+          ? 'https://$url'
+          : 'http://$url';
+    }
     while (url.endsWith('/')) {
       url = url.substring(0, url.length - 1);
     }
@@ -72,6 +80,21 @@ class OllamaService {
   }
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  /// Refuses to talk to a plain-http address on the internet: every prompt and
+  /// answer would travel unencrypted. Plain http stays available for this
+  /// device and the local network, where running Ollama yourself is normal.
+  /// (Android's own network policy does not cover Dart's HTTP client, so the
+  /// rule has to be enforced here.)
+  void _requireSafeAddress() {
+    if (serverSecurity(_baseUrl) == ServerSecurity.exposed) {
+      throw const OllamaException(
+        'Plain http to a server on the internet is blocked, because your '
+        'prompts would travel unencrypted. Use an https address in the server '
+        'settings.',
+      );
+    }
+  }
 
   OllamaException _unreachable([Object? cause]) => OllamaException(
     "Can't reach Ollama at $_baseUrl. Check your internet connection, or "
@@ -87,6 +110,7 @@ class OllamaService {
 
   /// Names of the models installed on the server, e.g. `llama3.2:latest`.
   Future<List<String>> listModels() async {
+    _requireSafeAddress();
     final client = _clientFactory();
     try {
       final response = await client
@@ -128,6 +152,7 @@ class OllamaService {
 
     Future<void> run() async {
       try {
+        _requireSafeAddress();
         final request = http.Request('POST', _uri('/api/chat'))
           ..headers['Content-Type'] = 'application/json'
           ..headers.addAll(_authHeaders)

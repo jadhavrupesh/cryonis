@@ -117,13 +117,15 @@ class _AgentVoiceScreenState extends State<AgentVoiceScreen>
   Future<void> _finishVoice() async {
     if (_closing) return;
     _closing = true;
-    final turns = conversationFrom(_backend.lines);
     try {
       await _backend.end();
     } catch (_) {
       // Closing should always return control to the caller, even if the
       // transport has already failed.
     }
+    // Read the transcript only now: a last sentence can still arrive while the
+    // call shuts down, and reading before would drop it from the chat.
+    final turns = conversationFrom(_backend.lines);
     if (!mounted) return;
     Navigator.of(context).pop(turns);
   }

@@ -228,12 +228,12 @@ void main() {
       );
 
       await chat.setServer(url: 'ollama.com/', apiKey: ' key ');
-      expect(chat.baseUrl, 'http://ollama.com');
+      expect(chat.baseUrl, 'https://ollama.com');
       expect(chat.apiKey, 'key');
       expect(chat.connection, Connection.online);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(ChatController.savedBaseUrl(prefs), 'http://ollama.com');
+      expect(ChatController.savedBaseUrl(prefs), 'https://ollama.com');
       expect(secrets.values[ApiKeyStore.key], 'key');
       expect(prefs.getString(ApiKeyStore.key), isNull);
 

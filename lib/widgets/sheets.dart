@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_config.dart';
 import '../screens/licenses_screen.dart';
+import '../services/ollama_service.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_scope.dart';
 import '../theme/app_theme.dart';
@@ -63,6 +64,26 @@ class ModelChip extends StatelessWidget {
     );
   }
 }
+
+/// What the settings sheet says about a plain-http server address, or null for
+/// an address that needs no comment.
+@visibleForTesting
+({String text, bool blocked})? plainHttpNotice(ServerSecurity security) =>
+    switch (security) {
+      ServerSecurity.localNetwork => (
+        text:
+            'Plain http on your local network: prompts and answers are not '
+            'encrypted. Use this only on a network you trust.',
+        blocked: false,
+      ),
+      ServerSecurity.exposed => (
+        text:
+            'Plain http to a server on the internet is blocked. Use an '
+            'https address.',
+        blocked: true,
+      ),
+      _ => null,
+    };
 
 Future<void> showModelPicker(BuildContext context) =>
     _showSheet(context, const _SheetFrame(title: 'Model', child: _ModelList()));
@@ -308,6 +329,28 @@ class _ServerSettingsState extends State<_ServerSettings> {
           style: AppText.body,
           onSubmitted: (_) => _connect(),
           decoration: _fieldDecoration(cloudOllamaUrl),
+        ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _url,
+          builder: (context, value, _) {
+            final notice = plainHttpNotice(
+              serverSecurity(OllamaService.normalizeBaseUrl(value.text)),
+            );
+            if (notice == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                notice.text,
+                style: AppText.caption.copyWith(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: notice.blocked
+                      ? AppColors.error
+                      : const Color(0xFFFFC53D),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 10),
         Text(
