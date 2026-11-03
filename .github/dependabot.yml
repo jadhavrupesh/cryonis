@@ -1,0 +1,40 @@
+# Dependabot opens pull requests for outdated dependencies and GitHub Actions.
+# Each one goes through the normal CI checks and maintainer approval, so nothing
+# is merged automatically. Android (Gradle) and Apple-platform native dependencies
+# are managed by Flutter's tooling and are upgraded together with a Flutter SDK bump.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      pub-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: uv
+    directory: /agent
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-and-patch:
+        update-types:
+          - minor
+          - patch

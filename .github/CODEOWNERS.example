@@ -1,0 +1,5 @@
+# Rename this file to CODEOWNERS after replacing the placeholder with the
+# maintainer's real GitHub user or team. Then enable required Code Owner review
+# in the main-branch ruleset.
+
+* @YOUR_GITHUB_USERNAME_OR_TEAM

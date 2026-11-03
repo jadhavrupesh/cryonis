@@ -1,0 +1,22 @@
+[project]
+name = "cryonis-voice-agent"
+version = "0.1.0"
+description = "Voice agent for the Cryonis app: LiveKit Agents with an Ollama Cloud model."
+# Python 3.11+ is required so the lock can use patched Pillow and OpenTelemetry
+# releases; their security fixes are not available for the former 3.10 branch.
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "livekit-agents[openai,silero]>=1.6,<2",
+    "livekit-plugins-noise-cancellation~=0.3",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]

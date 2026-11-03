@@ -1,0 +1,7 @@
+[project]
+  # Copy this file to livekit.toml and replace this with the subdomain from
+  # your own LiveKit Cloud project.
+  subdomain = "your-project-subdomain"
+
+# `lk agent create` adds an [agent] section containing your deployed agent ID.
+# Keep livekit.toml local: it is ignored by Git and excluded from Docker images.

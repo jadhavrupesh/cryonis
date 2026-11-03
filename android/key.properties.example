@@ -1,0 +1,6 @@
+# Copy this file to android/key.properties and fill in the release-keystore values.
+# android/key.properties and keystore files are ignored by Git.
+storePassword=change-me
+keyPassword=change-me
+keyAlias=upload
+storeFile=/absolute/path/to/cryonis-upload-keystore.jks
