@@ -32,6 +32,21 @@ const _answer =
     'runes. The cliff beneath his feet crumbles slightly, adding tension to '
     'the moment.';
 
+const _techQuestion = 'How does a voice call with Cryo work?';
+const _techAnswer =
+    'A call is a loop of four steps:\n\n'
+    '1. **Listen** – your microphone streams to LiveKit Cloud.\n'
+    '2. **Understand** – speech-to-text turns it into words.\n'
+    '3. **Think** – the language model writes the reply.\n'
+    '4. **Speak** – text-to-speech streams the answer back.\n\n'
+    'On the app side it is only a few lines:\n\n'
+    '```dart\n'
+    'final room = Room();\n'
+    'await room.connect(url, token);\n'
+    'final me = room.localParticipant;\n'
+    'await me?.setMicrophoneEnabled(true);\n'
+    '```';
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -96,6 +111,41 @@ void main() {
 
     await tester.tap(find.textContaining('Create a mystical'));
     await save('03_chat', frames: 20);
+
+    // A chat with a list and a code block (used in the README). Start from an
+    // empty chat: adding a conversation appends to the one that is open.
+    chat.reset();
+    chat.addConversation(const [
+      ChatMessage(role: ChatRole.user, content: _techQuestion),
+      ChatMessage(role: ChatRole.assistant, content: _techAnswer),
+    ]);
+    // A fresh key each time so the app starts again on the home screen.
+    await mount(CryonisApp(key: UniqueKey(), controller: chat));
+    // The home screen fades its rows in; wait for them before tapping.
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.textContaining('How does a voice call'));
+    await save('14_chat_markdown', frames: 20);
+
+    // The server-settings sheet, then the licences screen behind its button.
+    await mount(CryonisApp(key: UniqueKey(), controller: chat));
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.byTooltip('Server settings'));
+    await save('15_settings', frames: 20);
+
+    final licences = find.text('Open-source licences');
+    await tester.ensureVisible(licences);
+    await tester.tap(licences);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    // The test clock never completes an asset read; give it real time.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await save('16_licences', frames: 20);
 
     // The live voice screen in each state.
     var backend = FakeVoiceBackend();

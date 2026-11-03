@@ -82,16 +82,16 @@ Cryonis is a Flutter AI assistant providing Ollama text and vision chat, on-devi
 
 ### OS-8. Prepare the public repository launch
 
-- [ ] Choose the public repository owner and name.
+- [x] Choose the public repository owner and name: `jadhavrupesh/cryonis`, private for now.
 - [x] Add the MIT License and reference it from README.
 - [x] Replace the maintainer's LiveKit configuration with an ignored local file and public template.
 - [ ] Complete the remaining work in OS-5 through OS-7.
 - [x] Scan the intended public file set for secrets (3 November 2026).
-- [ ] Run a full-history secret scan on the new repository's first commit. The earlier history passed but was removed on 3 November 2026.
+- [x] Run a full-history secret scan on the new repository's first commit: the Gitleaks run on GitHub passed (3 November 2026). Rerun it after later commits.
 - [x] Run a dependency/license review (OS-9): no known vulnerabilities in the Python lock and no GPL-family licences in either ecosystem, 3 November 2026. The Dart packages were not vulnerability-audited.
 - [x] Show open-source licence notices inside the app (OS-9, follow-up 1).
 - [ ] Decide whether the Lumix-derived layout needs the designer's permission (OS-9, follow-up 2).
-- [ ] Create the public remote and push `main` only after the review passes.
+- [ ] Make the repository public only after the review passes. A private remote exists and `main` is pushed (3 November 2026).
 - [ ] Configure repository description, topics, social preview and default branch.
 - [ ] Enable branch protection, required CI checks (including `Secret scan`), vulnerability reporting and dependency alerts.
 - [x] Document PR-only governance, maintainer-only merge authority and required branch-protection settings.
@@ -127,8 +127,9 @@ Completed since the original review:
 ### 2. Establish a Git baseline — redo under the new account
 
 - **What happened:** A baseline commit (`9459b47`, `Initial Cryonis project baseline`) and two later commits existed locally on `main` and `codex/open-source-readiness`, never pushed. On 3 November 2026 the repository's `.git` folder was moved out of the project so the code can be pushed to a different account; the working files were not changed (295 files before and after). The moved history is kept outside the project as `cryonis-git-history-backup-20261103` next to it, and its commits carried the machine's global Git identity.
-- **Done since:** A new local repository was created the same day with the intended account's name and email set for this project only (the machine's global identity is unchanged), a fresh first commit was made, and `origin` was set to the intended account's `cryonis` repository.
-- **Remaining:** Push `main`. The push was not attempted because that repository was not visible from this machine: GitHub returned "not found" both anonymously and with the stored credential (which belongs to a different account), and the SSH key is not registered. Create the empty repository (private first is safest, see the launch checklist) and push from a session signed in as the intended account. Until then the project has no off-device backup and GitHub Actions cannot run. Gitleaks is not installed on this machine, so the first CI run of the secret scan is its first full-history check.
+- **Done since:** A new local repository was created the same day with the intended account's name and email set for this project only (the machine's global identity is unchanged), a fresh first commit was made, and `main` was pushed the same day to the private `jadhavrupesh/cryonis` repository over SSH with a dedicated key (the account's other key was left alone). GitHub shows the commit under the account's profile. The off-device backup now exists.
+- **First remote runs:** The Secret scan (Gitleaks) passed on the pushed history, which closes the full-history scan. The CI run had not finished when GitHub Actions was switched off in the repository settings at the maintainer's request on 3 November 2026, so its result is unknown. Dependabot had opened two update pull requests; the Dependency review job failed on both, and the cause was not investigated.
+- **Remaining:** To run CI, dependency review and Dependabot again, re-enable Actions (Settings → Actions → General → Allow all actions). Decide what to do with the two open Dependabot pull requests. The repository stays private until the launch checklist passes.
 - **If we skip it:** A machine failure could lose the project, and none of the CI, secret-scan or dependency checks added so far will ever run.
 
 ### 3. Move attached images out of SharedPreferences
@@ -229,7 +230,7 @@ Completed since the original review:
 
 ## Recommended execution order
 
-1. Choose the public repository owner/name.
+1. ~~Choose the public repository owner/name.~~ Chosen: `jadhavrupesh/cryonis`, private for now.
 2. ~~Add dependency review/updates and finish pinning the remaining GitHub Actions.~~ Done locally on 3 November 2026 (OS-6).
 3. ~~Run the dependency licence inventory~~ (done, OS-9). Commit the work, then rerun Gitleaks after the final public-release commit.
 4. Run the full public-release audit, create the remote, then push the reviewed history.

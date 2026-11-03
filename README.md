@@ -1,77 +1,127 @@
-# Cryonis
+<p align="center">
+  <img src="docs/banner.png" alt="Cryonis, a voice-first AI assistant" width="100%">
+</p>
 
-Cryonis is a Flutter AI assistant for Android, iOS, and macOS. It supports streaming text chat through Ollama and two voice modes:
+<p align="center">
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-2ea44f"></a>
+  <img alt="Flutter 3.47" src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white">
+  <img alt="Android, iOS and macOS" src="https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20macOS-555">
+  <img alt="Voice by LiveKit Agents" src="https://img.shields.io/badge/voice-LiveKit%20Agents-1f1f1f">
+  <img alt="Models from Ollama Cloud" src="https://img.shields.io/badge/models-Ollama%20Cloud-000">
+  <img alt="English and Hindi" src="https://img.shields.io/badge/voice%20languages-English%20%2B%20Hindi-c8c8c4">
+</p>
 
-- on-device speech-to-text dictation; and
-- a two-way LiveKit voice agent ("Cryo", English and Hindi) backed by Ollama Cloud, Deepgram STT, and Cartesia TTS.
+<p align="center">
+  <b>Chat with an AI, or just talk to it. In English and Hindi.</b><br>
+  Cryonis is a Flutter assistant for Android, iOS and macOS with streaming text chat through Ollama and a live voice agent called <i>Cryo</i>.
+</p>
 
-The default hosted path needs no local model server. Local Ollama remains available for development or private deployments.
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/screenshots/home.png" width="170" alt="Home screen"><br><sub>Home</sub></td>
+    <td align="center"><img src="docs/screenshots/chat.png" width="170" alt="Chat with Markdown and code"><br><sub>Chat</sub></td>
+    <td align="center"><img src="docs/screenshots/voice-listening.png" width="170" alt="Voice call, listening"><br><sub>Voice: listening</sub></td>
+    <td align="center"><img src="docs/screenshots/voice-speaking.png" width="170" alt="Voice call, Cryo speaking"><br><sub>Voice: Cryo speaking</sub></td>
+    <td align="center"><img src="docs/screenshots/settings.png" width="170" alt="Server settings"><br><sub>Settings</sub></td>
+  </tr>
+</table>
 
-The interface follows the Dribbble shot [Lumix – AI Platform Mobile App](https://dribbble.com/shots/26513278-Lumix-AI-Platform-Mobile-App):
-a black canvas with layered charcoal surfaces, a warm silver accent, Inter type, and a voice screen built around a ring of dots and a monochrome glow
-rising from the bottom. The analysis (colours, sizes, a frame-by-frame motion timeline) is in [UI_SPEC.md](UI_SPEC.md).
+<p align="center">
+  <sub>Rendered from the app's real widgets with sample text, with no network and no key. Regenerate them with the steps in <a href="tool/readme_images.py"><code>tool/readme_images.py</code></a>.</sub>
+</p>
 
-## Current status
+<details>
+<summary>More screens</summary>
 
-- Ollama text chat, Markdown/code rendering, image prompts, model selection, errors, retry, regenerate, and stop are implemented.
-- Conversations persist across restarts; the home screen lists the saved one under **Previous conversations** (title and time) and resumes it.
-- **Voice:** on-device dictation and the live LiveKit call screen, with recoverable call retries. The ring animates differently for each
-  phase of the agent's loop: listening (breathing, outward ripples), your words arriving (inward ripples), thinking (an orbiting arc),
-  speaking (ripples driven by Cryo's voice).
-- **Voice agent (deployed on LiveKit Cloud):** [agent/](agent/README.md) is the single source of truth. It supports English and Hindi,
-  `gpt-oss:120b`, the Hindi/Hinglish Cartesia voice setting, background-noise filtering, table-aware speech cleanup, per-turn latency and
-  interruption logging, and a spoken greeting. Contributors deploy it to their own LiveKit Cloud project using the public example configuration.
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/screenshots/voice-thinking.png" width="170" alt="Voice call, thinking"><br><sub>Voice: thinking</sub></td>
+    <td align="center"><img src="docs/screenshots/licences.png" width="170" alt="Licences screen"><br><sub>Licences</sub></td>
+  </tr>
+</table>
+
+</details>
+
+## Highlights
+
+| | |
+|---|---|
+| **Streaming chat** | Ollama text chat with Markdown, syntax-highlighted code, retry, regenerate and stop. Up to four images per prompt for vision models. |
+| **Talk to Cryo** | A two-way voice call over WebRTC: Deepgram speech recognition, an Ollama Cloud model for the answer, and Cartesia speech. You can interrupt it, and a background-noise filter cleans your microphone. |
+| **English and Hindi** | Cryo answers in the language you speak, writes Hindi in Devanagari and follows mixed Hindi/English sentences. |
+| **Works without a voice server** | On-device dictation takes over until a LiveKit project is configured. |
+| **Free-tier friendly** | The model picker lists Ollama Cloud's free models. A local Ollama server works too. |
+| **Private by default** | API keys live in the Keychain or Keystore, are only sent to `https` addresses, and no account is needed. |
+| **Designed, not themed** | A black canvas, charcoal surfaces, a silver accent, Inter type, and a ring of dots that moves differently while Cryo listens, hears, thinks and speaks ([design notes](UI_SPEC.md)). |
+| **Tested** | 104 Flutter tests and 40 Python agent tests, strict static analysis, and an in-app licences screen. |
+
+## How it works
+
+```mermaid
+flowchart LR
+    subgraph app["Flutter app · Android, iOS, macOS"]
+        ui["Chat, voice and settings"]
+    end
+    ui -->|"streamed text"| ollama[("Ollama Cloud<br/>or local Ollama")]
+    ui -->|"on-device dictation"| dictation["Platform speech<br/>recognition"]
+    dictation --> ollama
+    ui <-->|"WebRTC audio"| livekit["LiveKit Cloud"]
+    livekit <--> agent["Cryo agent<br/>Python, LiveKit Agents"]
+    agent --> noise["Noise filter<br/>Krisp"]
+    agent --> stt["Deepgram STT<br/>English + Hindi"]
+    agent --> llm["Ollama Cloud model<br/>gpt-oss:120b"]
+    agent --> tts["Cartesia TTS"]
+```
+
+## Quick start
+
+```bash
+git clone <repository-url> cryonis && cd cryonis
+flutter pub get
+printf "const ollamaApiKey = '';\nconst livekitSandboxId = '';\n" > lib/secrets.dart
+flutter run -d macos
+```
+
+Then open the settings sheet (the menu icon), choose **Ollama Cloud**, paste an [Ollama API key](https://ollama.com/settings/keys) and pick a model. Voice calls need a LiveKit project and the deployed agent: see [Set up live voice](#set-up-live-voice). Everything else on this page is reference material.
+
+## Project status
+
+- Text chat, Markdown and code rendering, image prompts, model selection, error handling, retry, regenerate and stop are implemented.
+- One conversation is saved across restarts; the home screen lists it under **Previous conversations** and resumes it.
+- **Voice:** on-device dictation and the live LiveKit call screen, with recoverable call retries. The ring animates per phase of the agent's loop: listening (breathing, outward ripples), your words arriving (inward ripples), thinking (an orbiting arc) and speaking (ripples driven by Cryo's voice).
+- **Voice agent (deployed on LiveKit Cloud):** [agent/](agent/README.md) is the single source of truth. It supports English and Hindi, `gpt-oss:120b`, the Hindi/Hinglish Cartesia voice setting, background-noise filtering, table-aware speech cleanup, per-turn latency and interruption logging, and a spoken greeting. Contributors deploy it to their own LiveKit Cloud project using the public example configuration.
 - Ollama API keys use secure platform storage; older plain-text preferences are migrated automatically.
-- 104 Flutter tests and 40 Python agent tests pass; macOS
-  and Android debug builds are supported. The app has been run on an Android phone (A142, Android 16): a call started from it reached the
-  deployed agent and speech was transcribed (2 Nov 2026).
-- Not verified: how a live call sounds to a real listener (audio quality, interrupting it, reconnecting) and a signed release build.
+- 104 Flutter tests and 40 Python agent tests pass; macOS and Android debug builds are supported. The app has been run on an Android phone (A142, Android 16): a call started from it reached the deployed agent and speech was transcribed (2 Nov 2026).
+- **Not verified:** how a live call sounds to a real listener (audio quality, interrupting it, reconnecting) and a signed release build.
 - If a call hangs on "Connecting…", check the agent still exists: `lk agent list` (on 2 Nov it had vanished from the project and was re-created).
 - The LiveKit sandbox token flow is development-only. Use an authenticated token endpoint before production.
 
-See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the verified checklist, [PROJECT_IMPROVEMENTS.md](PROJECT_IMPROVEMENTS.md) for the prioritized engineering backlog, [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for architectural decisions and project history, [UI_SPEC.md](UI_SPEC.md) for the design analysis, and [BUILD_GUIDE.md](BUILD_GUIDE.md) for the implementation walkthrough.
+## Documentation
 
-## Contributing
+| File | What is in it |
+|---|---|
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | The verified checklist and remaining external work |
+| [PROJECT_IMPROVEMENTS.md](PROJECT_IMPROVEMENTS.md) | The prioritized engineering backlog and open-source launch checklist |
+| [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) | Architectural decisions and project history |
+| [UI_SPEC.md](UI_SPEC.md) | Design analysis: colours, type, motion timeline, ring phases |
+| [BUILD_GUIDE.md](BUILD_GUIDE.md) | A step-by-step implementation walkthrough |
+| [agent/README.md](agent/README.md) | The voice agent: models, languages, noise and interruption results, deployment |
 
-Cryonis welcomes contributions from everyone. All changes must be proposed through a pull request; direct pushes to `main` are not allowed, and only maintainers may merge after the required review and CI checks pass.
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before starting and [GOVERNANCE.md](GOVERNANCE.md) for contributor, reviewer and maintainer responsibilities. Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md), support requests follow [SUPPORT.md](SUPPORT.md), and vulnerabilities must be reported privately under [SECURITY.md](SECURITY.md). GitHub owners must enable the rules in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) after the public remote is created—the policy files do not enforce branch protection by themselves.
-
-## License
-
-Cryonis is open-source software licensed under the [MIT License](LICENSE). The bundled Inter font remains licensed separately under the [SIL Open Font License](assets/fonts/Inter-OFL.txt). In the app, the **Open-source licences** button at the bottom of the server-settings sheet (the menu icon in the header) shows this MIT licence first, with the licences of Flutter, its packages and the Inter font one tap behind it.
-
-## Architecture
-
-```text
-Flutter app
-  ├─ text ───────────────► Ollama /api/chat (streaming)
-  ├─ local dictation ────► platform speech recognition ─► Ollama chat
-  └─ live voice (WebRTC) ► LiveKit Cloud ◄► Python agent
-                                      ├─ background-noise filter (Krisp, on LiveKit Cloud)
-                                      ├─ Deepgram multilingual STT (English + Hindi)
-                                      ├─ Ollama Cloud LLM (gpt-oss:120b)
-                                      └─ Cartesia TTS
-```
-
-Important source locations:
+## Project layout
 
 ```text
-lib/screens/        Home, chat, dictation, and live-call screens
-lib/services/       Ollama, speech recognition, and LiveKit clients
+lib/screens/        Home, chat, dictation, live-call and licences screens
+lib/services/       Ollama, speech recognition, LiveKit clients and licence registration
 lib/state/          Conversation, connection, model, and settings state
 lib/widgets/        Header, input card, Markdown/code, and the voice visuals
                     (dot_ring, glow_backdrop, voice_widgets)
 lib/utils/          Small helpers (relative time for the conversation list)
 assets/fonts/       Inter (SIL Open Font License)
+docs/               README images (screenshots, banner, social preview)
 test/               Flutter unit and widget tests
 integration_test/   Real Ollama Cloud chat test and a screen-render preview
+tool/               The script that builds the README images
 agent/              The deployed Python voice agent, tests, Dockerfile, deployment config, and scripted-call tool
-PROJECT_STATUS.md   Verified checklist and remaining external work
-PROJECT_IMPROVEMENTS.md Prioritized reliability, production, and product improvements
-PROJECT_CONTEXT.md  Architectural decisions and project history
-BUILD_GUIDE.md      Step-by-step implementation walkthrough
-UI_SPEC.md          Design analysis: colours, type, motion timeline, ring phases
 ```
 
 ## Requirements
@@ -237,7 +287,7 @@ flutter test integration_test/native_chat_test.dart -d macos
 ```
 
 To look at every screen without a phone or a call, render them inside the real macOS app (no network, no key); it prints the paths of
-the PNGs it writes:
+the PNGs it writes. The same PNGs feed the README images ([`tool/readme_images.py`](tool/readme_images.py)):
 
 ```bash
 flutter test integration_test/voice_ui_preview_test.dart -d macos
@@ -256,6 +306,8 @@ flutter test integration_test/voice_ui_preview_test.dart -d macos
 
 GitHub Actions under `.github/workflows/ci.yml` runs static analysis, Flutter tests, Python agent tests, and Android/macOS debug builds without requiring provider secrets. `.github/workflows/security.yml` checks the complete fetched Git history with Gitleaks on every push and pull request. `.github/workflows/dependency-review.yml` blocks a pull request that adds a dependency with a high or critical advisory or an AGPL/GPL licence, and `.github/dependabot.yml` proposes weekly updates for GitHub Actions, Dart packages and the agent's Python lock. All workflows use read-only repository permissions and pin every third-party action to a reviewed commit SHA.
 
+> **Switched off on the maintainer's repository.** Actions are currently disabled in its Settings → Actions → General, so none of these workflows run there until they are turned back on. A fork or a new repository runs them as soon as Actions is enabled.
+
 Contributors with Gitleaks installed can scan committed history before pushing:
 
 ```bash
@@ -263,3 +315,15 @@ gitleaks git . --redact
 ```
 
 Signed production builds still need platform signing credentials. Real Ollama and LiveKit integration tests remain deliberate manual checks.
+
+## Contributing
+
+Cryonis welcomes contributions from everyone. All changes must be proposed through a pull request; direct pushes to `main` are not allowed, and only maintainers may merge after the required review and CI checks pass.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before starting and [GOVERNANCE.md](GOVERNANCE.md) for contributor, reviewer and maintainer responsibilities. Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md), support requests follow [SUPPORT.md](SUPPORT.md), and vulnerabilities must be reported privately under [SECURITY.md](SECURITY.md). GitHub owners must enable the rules in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) after the public remote is created—the policy files do not enforce branch protection by themselves.
+
+## Licence
+
+Cryonis is open-source software licensed under the [MIT License](LICENSE). The bundled Inter font remains licensed separately under the [SIL Open Font License](assets/fonts/Inter-OFL.txt). In the app, the **Open-source licences** button at the bottom of the server-settings sheet (the menu icon in the header) shows this MIT licence first, with the licences of Flutter, its packages and the Inter font one tap behind it.
+
+The interface layout, colours and motion follow the Dribbble shot [Lumix – AI Platform Mobile App](https://dribbble.com/shots/26513278-Lumix-AI-Platform-Mobile-App) by Barly Design (no brand assets are used); see [UI_SPEC.md](UI_SPEC.md) for the analysis and [PROJECT_IMPROVEMENTS.md](PROJECT_IMPROVEMENTS.md) for the open question about permission.
